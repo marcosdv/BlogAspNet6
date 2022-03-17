@@ -6,12 +6,12 @@
 
 ### Conteúdo
 
-- [x] CRUD e Entity Framework
-- [x] Autenticação e Autorização
-- [x] Configuração
-- [ ] Performance
-- [ ] ASP.NET 5 (Migração)
-- [ ] Ambientes e Documentação
+- [x] CRUD e Entity Framework (Módulo 3)
+- [x] Autenticação e Autorização (Módulo 4)
+- [x] Configuração (Módulo 5)
+- [ ] Performance (Módulo 6)
+- [ ] ASP.NET 5 (Migração) (Módulo 7)
+- [ ] Ambientes e Documentação (Módulo 8)
 
 ### Tecnologias
 
