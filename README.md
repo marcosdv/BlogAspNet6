@@ -8,7 +8,7 @@
 
 - [x] CRUD e Entity Framework
 - [x] Autenticação e Autorização
-- [ ] Configuração
+- [x] Configuração
 - [ ] Performance
 - [ ] ASP.NET 5 (Migração)
 - [ ] Ambientes e Documentação
