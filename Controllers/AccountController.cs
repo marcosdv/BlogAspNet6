@@ -3,10 +3,12 @@ using BlogAspNet6.Extensions;
 using BlogAspNet6.Models;
 using BlogAspNet6.Services;
 using BlogAspNet6.ViewModels;
+using BlogAspNet6.ViewModels.Accounts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SecureIdentity.Password;
+using System.Text.RegularExpressions;
 
 namespace BlogAspNet6.Controllers;
 
@@ -24,6 +26,7 @@ public class AccountController : ControllerBase
     [HttpPost("v1/accounts/")]
     public async Task<IActionResult> Post(
         [FromBody] RegisterViewModel model,
+        [FromServices] EmailService emailService,
         [FromServices] BlogDataContext context)
     {
         if (!ModelState.IsValid)
@@ -42,6 +45,13 @@ public class AccountController : ControllerBase
         {
             await context.Users.AddAsync(user);
             await context.SaveChangesAsync();
+
+            emailService.Send(
+                user.Name,
+                user.Email,
+                "Bem vindo ao Blog",
+                $"Sua senha é <strong>{password}</strong>"
+            );
 
             return Ok(new ResultViewModel<dynamic>(new {
                 user = user.Email,
@@ -90,6 +100,45 @@ public class AccountController : ControllerBase
         {
             return StatusCode(500, new ResultViewModel<string>("05X04 - Falha interna no servidor!"));
         }
+    }
+
+    [Authorize]
+    [HttpPost("v1/accounts/upload-image")]
+    public async Task<IActionResult> UploadImage(
+        [FromBody] UploadImageViewModel model,
+        [FromServices] BlogDataContext context
+    )
+    {
+        var fileName = $"{Guid.NewGuid().ToString()}.jpg";
+        var data = new Regex(@"^data:image\/[a-z]+;base64,").Replace(model.Base64Image, "");
+        var bytes = Convert.FromBase64String(data);
+
+        try
+        {
+            await System.IO.File.WriteAllBytesAsync($"wwwroot/Images/{fileName}", bytes);
+        }
+        catch
+        {
+            return StatusCode(500, new ResultViewModel<string>("05X04 - Falha interna no servidor!"));
+        }
+
+        var user = await context.Users.FirstOrDefaultAsync(x => x.Email == User.Identity.Name);
+
+        if (user == null)
+            return NotFound(new ResultViewModel<User>("Usuário não encontrado!"));
+
+        user.Image = $"https://localhost:0000/images/{fileName}";
+        try
+        {
+            context.Users.Update(user);
+            await context.SaveChangesAsync();
+        }
+        catch
+        {
+            return StatusCode(500, new ResultViewModel<string>("05X04 - Falha interna no servidor!"));
+        }
+
+        return Ok(new ResultViewModel<string>("Imagem alterada com sucesso", errors: null));
     }
 
     /*
