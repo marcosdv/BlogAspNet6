@@ -9,9 +9,10 @@ namespace BlogAspNet6.Controllers
     {
         [HttpGet("")]
         [ApiKey]
-        public IActionResult Get()
+        public IActionResult Get(IConfiguration config)
         {
-            return Ok();
+            var env = config.GetValue<string>("Env");
+            return Ok(new { environment = env });
         }
     }
 }

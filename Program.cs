@@ -1,9 +1,13 @@
+using System.IO.Compression;
+using System.Text;
+using System.Text.Json.Serialization;
 using BlogAspNet6;
 using BlogAspNet6.Data;
 using BlogAspNet6.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,15 +17,31 @@ ConfigureMvc(builder);
 
 ConfigureServices(builder);
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 LoadConfiguration(app);
 
+app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseResponseCompression();
+
 app.UseStaticFiles();
 
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+{
+    Console.WriteLine("Ambiente de desenvolvimento");
+    
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.Run();
 
@@ -57,17 +77,36 @@ void ConfigureAuthentication(WebApplicationBuilder builder)
 
 void ConfigureMvc(WebApplicationBuilder builder)
 {
-    builder.Services
-    .AddControllers()
-    .ConfigureApiBehaviorOptions(options =>
-    {
-        options.SuppressModelStateInvalidFilter = true;
+    builder.Services.AddMemoryCache();
+
+    builder.Services.AddResponseCompression(options => {
+        options.Providers.Add<GzipCompressionProvider>();
+        //options.Providers.Add<BrotliCompressionProvider>();
     });
+    builder.Services.Configure<GzipCompressionProviderOptions>(options => {
+        options.Level = CompressionLevel.Optimal;
+    });
+
+    builder.Services
+        .AddControllers()
+        .ConfigureApiBehaviorOptions(options =>
+        {
+            options.SuppressModelStateInvalidFilter = true;
+        })
+        .AddJsonOptions(x =>
+        {
+            x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+            x.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+        });
 }
 
 void ConfigureServices(WebApplicationBuilder builder)
 {
-    builder.Services.AddDbContext<BlogDataContext>();
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    builder.Services.AddDbContext<BlogDataContext>(options => {
+        options.UseSqlServer(connectionString);
+    });
     //builder.Services.AddTransient(); //Sempre cria um novo, a cada chamada
     //builder.Services.AddScoped(); //Por requisicao, dura na memoria dentro da mesma requisicao
     //builder.Services.AddSingleton(); //Carrega na criacao, e fica na memoria ate o fim (padrao Singleton)

@@ -9,9 +9,9 @@
 - [x] CRUD e Entity Framework (Módulo 3)
 - [x] Autenticação e Autorização (Módulo 4)
 - [x] Configuração (Módulo 5)
-- [ ] Performance (Módulo 6)
-- [ ] ASP.NET 5 (Migração) (Módulo 7)
-- [ ] Ambientes e Documentação (Módulo 8)
+- [x] Performance (Módulo 6)
+- [x] ASP.NET 5 (Migração) (Módulo 7)
+- [x] Ambientes e Documentação (Módulo 8)
 
 ### Tecnologias
 
